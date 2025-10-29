@@ -23,7 +23,7 @@ console.log(`- SUPABASE_URL: ${process.env.SUPABASE_URL ? '✅ Configurado' : '�
 console.log(`- JWT_SECRET: ${process.env.JWT_SECRET ? '✅ Configurado' : '❌ Não configurado'}`);
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = Number(process.env.PORT) || 3000;
 
 const httpServer = createServer(app);
 
