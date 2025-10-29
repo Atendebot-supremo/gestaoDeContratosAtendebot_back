@@ -1,25 +1,22 @@
 # Use a imagem oficial do Node.js 18 LTS
 FROM node:18-alpine
 
-# Definir diretório de trabalho (evita conflito com /app do Nixpacks)
+# Definir diretório de trabalho
 WORKDIR /usr/src/app
 
 # Copiar package.json e package-lock.json
 COPY package*.json ./
 
-# Instalar dependências de produção
-RUN npm ci --only=production
+# Instalar todas as dependências (dev + prod) para build
+RUN npm ci
 
 # Copiar código fonte
 COPY . .
 
-# Instalar dependências de desenvolvimento para build
-RUN npm ci
-
 # Compilar TypeScript
 RUN npm run build
 
-# Remover dependências de desenvolvimento
+# Remover dependências de desenvolvimento e node_modules
 RUN npm prune --production
 
 # Expor a porta

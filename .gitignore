@@ -1,6 +1,5 @@
 # Dependencies
 node_modules/
-package-lock.json
 yarn.lock
 
 # Build output
@@ -33,4 +32,46 @@ yarn-error.log*
 # Temporary files
 tmp/
 temp/
-*.tmp
+*.tmpgut s
+
+# System files (Windows)
+AppData/
+NTUSER.DAT*
+ntuser.dat*
+*.ini
+*.LOG*
+*.regtrans-ms
+*.TM.blf
+*.TMContainer*
+autosave.xmi
+.bash_history
+.config/
+.cursor/
+.gitconfig
+.lesshst
+.viminfo
+
+# User directories
+3D Objects/
+Contacts/
+Desktop/
+Documents/
+Downloads/
+Favorites/
+Links/
+Music/
+OneDrive/
+Pictures/
+Saved Games/
+Searches/
+Videos/
+Ambiente de Impressão/
+Ambiente de Rede/
+Configurações Locais/
+Cookies/
+Dados de Aplicativos/
+Menu Iniciar/
+Meus Documentos/
+Modelos/
+Recent/
+SendTo/
