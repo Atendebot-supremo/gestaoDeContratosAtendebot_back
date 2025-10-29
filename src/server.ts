@@ -15,6 +15,13 @@ import webhooksRoutes from './features/webhooks/webhooksRoutes';
 
 dotenv.config();
 
+// Debug: verificar variáveis de ambiente
+console.log('🔧 Configurações:');
+console.log(`- PORT: ${process.env.PORT || 3000}`);
+console.log(`- NODE_ENV: ${process.env.NODE_ENV || 'development'}`);
+console.log(`- SUPABASE_URL: ${process.env.SUPABASE_URL ? '✅ Configurado' : '❌ Não configurado'}`);
+console.log(`- JWT_SECRET: ${process.env.JWT_SECRET ? '✅ Configurado' : '❌ Não configurado'}`);
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -105,7 +112,14 @@ app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
 }));
 
 // Health endpoints
-app.get('/health', (_, res) => res.json({ status: 'OK' }));
+app.get('/health', (_, res) => {
+  res.status(200).json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
 app.get('/ready', (_, res) => res.json({ status: 'ready' }));
 app.get('/live', (_, res) => res.json({ status: 'alive' }));
 
@@ -135,7 +149,7 @@ app.use((err: Error, _: express.Request, res: express.Response, __: express.Next
   });
 });
 
-httpServer.listen(PORT, () => {
+httpServer.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
   console.log(`📚 Documentação: http://localhost:${PORT}/api/docs`);
   console.log(`🏥 Health check: http://localhost:${PORT}/health`);
