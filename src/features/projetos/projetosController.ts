@@ -242,6 +242,83 @@ export default class ProjetosController {
   /**
    * @swagger
    * /api/projetos/{id}:
+   *   put:
+   *     summary: Substitui projeto completamente (todos os campos obrigatórios)
+   *     tags: [Projetos]
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: string
+   *           format: uuid
+   *         description: ID do projeto
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         multipart/form-data:
+   *           schema:
+   *             type: object
+   *             required: [nome_projeto]
+   *             properties:
+   *               nome_projeto:
+   *                 type: string
+   *               descricao:
+   *                 type: string
+   *               pdf_file:
+   *                 type: string
+   *                 format: binary
+   *           example:
+   *             nome_projeto: "Projetos Labfy"
+   *             descricao: "Descrição do projeto"
+   *     responses:
+   *       200:
+   *         description: Projeto substituído com sucesso
+   *       404:
+   *         description: Projeto não encontrado
+   */
+  replace = async (req: Request, res: Response): Promise<void> => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      res.status(400).json(
+        createErrorResponse('Dados inválidos', ErrorCode.INVALID_INPUT)
+      );
+      return;
+    }
+
+    const { id } = req.params;
+    const projetoData = {
+      nome_projeto: req.body.nome_projeto,
+      descricao: req.body.descricao || undefined
+    };
+
+    const pdfFile = req.file as Express.Multer.File | undefined;
+
+    const result = await this.service.replaceProjeto(id, projetoData, pdfFile);
+
+    if (!result.success) {
+      const statusCode =
+        result.code === 'INVALID_INPUT'
+          ? 400
+          : result.code === 'NOT_FOUND'
+          ? 404
+          : result.code === 'CONFLICT'
+          ? 409
+          : 500;
+      res.status(statusCode).json(result);
+      return;
+    }
+
+    res.status(200).json(
+      createSuccessResponse(result.data, 'Projeto substituído com sucesso')
+    );
+  };
+
+  /**
+   * @swagger
+   * /api/projetos/{id}:
    *   delete:
    *     summary: Deleta projeto
    *     tags: [Projetos]

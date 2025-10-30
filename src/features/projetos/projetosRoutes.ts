@@ -76,6 +76,13 @@ router.patch(
   controller.update
 );
 
+router.put(
+  '/:id',
+  upload.single('pdf_file'),
+  [...validateId, ...validateCreateProjeto],
+  controller.replace
+);
+
 router.delete('/:id', validateId, controller.delete);
 
 export default router;

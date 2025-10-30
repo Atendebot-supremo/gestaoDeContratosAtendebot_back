@@ -325,6 +325,90 @@ export class ContratosService {
     }
   }
 
+  async replaceContrato(
+    id: string,
+    contratoData: CreateContratoRequest
+  ): Promise<APIResponse<Contrato>> {
+    try {
+      // Verifica se contrato existe
+      const { data: existing } = await supabase
+        .from('contratoslabfy')
+        .select('id')
+        .eq('id', id)
+        .single();
+
+      if (!existing) {
+        return {
+          success: false,
+          error: 'Contrato não encontrado',
+          code: 'NOT_FOUND' as any
+        };
+      }
+
+      // Valida se cliente existe
+      const { data: cliente } = await supabase
+        .from('clienteslabfy')
+        .select('id')
+        .eq('id', contratoData.cliente_id)
+        .single();
+
+      if (!cliente) {
+        return {
+          success: false,
+          error: 'Cliente não encontrado',
+          code: 'NOT_FOUND' as any
+        };
+      }
+
+      // Valida se projeto existe
+      const { data: projeto } = await supabase
+        .from('projetoslabfy')
+        .select('id')
+        .eq('id', contratoData.projeto_id)
+        .single();
+
+      if (!projeto) {
+        return {
+          success: false,
+          error: 'Projeto não encontrado',
+          code: 'NOT_FOUND' as any
+        };
+      }
+
+      // Substitui contrato completamente
+      const { data, error } = await supabase
+        .from('contratoslabfy')
+        .update({
+          ...contratoData,
+          status: 'Aguardando Geração' as ContratoStatus
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Erro ao substituir contrato:', error);
+        return {
+          success: false,
+          error: 'Erro ao substituir contrato',
+          code: 'INTERNAL_SERVER_ERROR' as any
+        };
+      }
+
+      return {
+        success: true,
+        data
+      };
+    } catch (error) {
+      console.error('Erro no serviço de substituição de contrato:', error);
+      return {
+        success: false,
+        error: 'Erro ao processar requisição',
+        code: 'INTERNAL_SERVER_ERROR' as any
+      };
+    }
+  }
+
   async deleteContrato(id: string): Promise<APIResponse<void>> {
     try {
       const { error } = await supabase

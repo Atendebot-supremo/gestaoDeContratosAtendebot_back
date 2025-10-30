@@ -119,6 +119,12 @@ router.patch(
   controller.update
 );
 
+router.put(
+  '/:id',
+  [...validateId, ...validateCreateContrato],
+  controller.replace
+);
+
 router.delete('/:id', validateId, controller.delete);
 
 export default router;

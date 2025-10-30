@@ -257,6 +257,95 @@ export default class ContratosController {
   /**
    * @swagger
    * /api/contratos/{id}:
+   *   put:
+   *     summary: Substitui contrato completamente (todos os campos obrigatórios)
+   *     tags: [Contratos]
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: string
+   *           format: uuid
+   *         description: ID do contrato
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required:
+   *               - cliente_id
+   *               - projeto_id
+   *               - valor_mensalidade
+   *               - valor_setup
+   *               - plano_nome
+   *             properties:
+   *               cliente_id:
+   *                 type: string
+   *                 format: uuid
+   *               projeto_id:
+   *                 type: string
+   *                 format: uuid
+   *               valor_mensalidade:
+   *                 type: string
+   *               valor_setup:
+   *                 type: string
+   *               plano_nome:
+   *                 type: string
+   *               observacoes_ia:
+   *                 type: string
+   *           example:
+   *             cliente_id: "2"
+   *             projeto_id: "1"
+   *             plano_nome: "Plano Scale"
+   *             valor_mensalidade: "799.00"
+   *             valor_setup: "4000.00"
+   *             prazo_implementacao_dias: 15
+   *             provedor_openai: "Labfy"
+   *             forma_pagamento: "Cartão de Crédito"
+   *             observacoes_ia: "este cliente deve ter uma clausula de confidencialidade."
+   *             assinante_venda_nome: "Enzo Lacerda"
+   *             assinante_venda_email: "enzo@hawkmarketing.digital"
+   *     responses:
+   *       200:
+   *         description: Contrato substituído com sucesso
+   *       404:
+   *         description: Contrato não encontrado
+   */
+  replace = async (req: Request, res: Response): Promise<void> => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      res.status(400).json(
+        createErrorResponse('Dados inválidos', ErrorCode.INVALID_INPUT)
+      );
+      return;
+    }
+
+    const { id } = req.params;
+    const result = await this.service.replaceContrato(id, req.body);
+
+    if (!result.success) {
+      const statusCode =
+        result.code === 'INVALID_INPUT'
+          ? 400
+          : result.code === 'NOT_FOUND'
+          ? 404
+          : 500;
+      res.status(statusCode).json(result);
+      return;
+    }
+
+    res.status(200).json(
+      createSuccessResponse(result.data, 'Contrato substituído com sucesso')
+    );
+  };
+
+  /**
+   * @swagger
+   * /api/contratos/{id}:
    *   delete:
    *     summary: Deleta contrato
    *     tags: [Contratos]

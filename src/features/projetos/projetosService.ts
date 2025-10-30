@@ -256,6 +256,119 @@ export class ProjetosService {
     }
   }
 
+  async replaceProjeto(
+    id: string,
+    projetoData: CreateProjetoRequest,
+    pdfFile?: Express.Multer.File
+  ): Promise<APIResponse<Projeto>> {
+    try {
+      // Verifica se projeto existe
+      const { data: existing } = await supabase
+        .from('projetoslabfy')
+        .select('id, template_pdf_path')
+        .eq('id', id)
+        .single();
+
+      if (!existing) {
+        return {
+          success: false,
+          error: 'Projeto não encontrado',
+          code: 'NOT_FOUND' as any
+        };
+      }
+
+      let templatePdfPath: string | undefined = existing.template_pdf_path;
+      let templateHtml: string | undefined;
+
+      // Se há novo arquivo PDF, processa upload e conversão
+      if (pdfFile) {
+        // Valida tipo e tamanho
+        if (pdfFile.mimetype !== 'application/pdf') {
+          return {
+            success: false,
+            error: 'Apenas arquivos PDF são permitidos',
+            code: 'INVALID_INPUT' as any
+          };
+        }
+
+        const maxSize = 10 * 1024 * 1024;
+        if (pdfFile.size > maxSize) {
+          return {
+            success: false,
+            error: 'Arquivo muito grande. Máximo 10MB',
+            code: 'INVALID_INPUT' as any
+          };
+        }
+
+        // Deleta arquivo antigo se existir
+        if (existing.template_pdf_path) {
+          try {
+            const oldFileName = existing.template_pdf_path.split('/').pop() || '';
+            await deleteFile('templates', oldFileName);
+          } catch (cleanupError) {
+            console.error('Erro ao deletar arquivo antigo:', cleanupError);
+          }
+        }
+
+        // Faz upload do novo arquivo
+        const timestamp = Date.now();
+        const fileName = `template-${timestamp}-${pdfFile.originalname}`;
+        const fileBuffer = multerFileToBuffer(pdfFile);
+
+        templatePdfPath = await uploadTemplatePDF(fileName, fileBuffer);
+        templateHtml = await parsePdfToHtml(fileBuffer);
+      }
+
+      // Substitui projeto completamente
+      const replaceData: any = {
+        nome_projeto: projetoData.nome_projeto,
+        descricao: projetoData.descricao
+      };
+
+      if (pdfFile) {
+        replaceData.template_pdf_path = templatePdfPath;
+        replaceData.template_html = templateHtml;
+      }
+
+      const { data, error } = await supabase
+        .from('projetoslabfy')
+        .update(replaceData)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Erro ao substituir projeto:', error);
+        // Se houve erro após upload, tenta limpar arquivo
+        if (templatePdfPath) {
+          try {
+            const fileName = templatePdfPath.split('/').pop() || '';
+            await deleteFile('templates', fileName);
+          } catch (cleanupError) {
+            console.error('Erro ao limpar arquivo após falha:', cleanupError);
+          }
+        }
+        return {
+          success: false,
+          error: 'Erro ao substituir projeto',
+          code: 'INTERNAL_SERVER_ERROR' as any
+        };
+      }
+
+      return {
+        success: true,
+        data
+      };
+    } catch (error) {
+      console.error('Erro no serviço de substituição de projeto:', error);
+      return {
+        success: false,
+        error: 'Erro ao processar requisição',
+        code: 'INTERNAL_SERVER_ERROR' as any
+      };
+    }
+  }
+
   async deleteProjeto(id: string): Promise<APIResponse<void>> {
     try {
       // Verifica se há contratos usando este projeto
