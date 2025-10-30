@@ -211,6 +211,85 @@ export class ClientesService {
     }
   }
 
+  async replaceCliente(
+    id: string,
+    clienteData: CreateClienteRequest
+  ): Promise<APIResponse<Cliente>> {
+    try {
+      // Verifica se cliente existe
+      const { data: existing } = await supabase
+        .from('clienteslabfy')
+        .select('id')
+        .eq('id', id)
+        .single();
+
+      if (!existing) {
+        return {
+          success: false,
+          error: 'Cliente não encontrado',
+          code: 'NOT_FOUND' as any
+        };
+      }
+
+      // Limpa CNPJ e verifica duplicatas
+      const cleanCNPJ = clienteData.cnpj.replace(/[^\d]/g, '');
+      
+      const { data: duplicate } = await supabase
+        .from('clienteslabfy')
+        .select('id')
+        .eq('cnpj', cleanCNPJ)
+        .neq('id', id)
+        .single();
+
+      if (duplicate) {
+        return {
+          success: false,
+          error: 'CNPJ já cadastrado para outro cliente',
+          code: 'CONFLICT' as any
+        };
+      }
+
+      // Atualiza todos os campos obrigatórios
+      const { data, error } = await supabase
+        .from('clienteslabfy')
+        .update({
+          razao_social: clienteData.razao_social,
+          cnpj: cleanCNPJ,
+          endereco_completo: clienteData.endereco_completo,
+          cidade_estado: clienteData.cidade_estado,
+          assinante_nome: clienteData.assinante_nome,
+          assinante_email: clienteData.assinante_email,
+          financeiro_nome: clienteData.financeiro_nome,
+          financeiro_email: clienteData.financeiro_email,
+          financeiro_telefone: clienteData.financeiro_telefone
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Erro ao substituir cliente:', error);
+        return {
+          success: false,
+          error: 'Erro ao substituir cliente',
+          code: 'INTERNAL_SERVER_ERROR' as any
+        };
+      }
+
+      return {
+        success: true,
+        data
+      };
+    } catch (error) {
+      console.error('Erro no serviço de substituição de cliente:', error);
+      return {
+        success: false,
+        error: 'Erro ao processar requisição',
+        code: 'INTERNAL_SERVER_ERROR' as any
+      };
+    }
+  }
+
   async deleteCliente(id: string): Promise<APIResponse<void>> {
     try {
       // Verifica se há contratos associados

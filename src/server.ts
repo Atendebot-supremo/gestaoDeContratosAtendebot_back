@@ -35,7 +35,9 @@ app.use(helmet({
       styleSrc: ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net'],
       scriptSrc: ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net'],
       imgSrc: ["'self'", 'data:', 'https:'],
-      connectSrc: ["'self'"],
+      connectSrc: process.env.NODE_ENV === 'production'
+        ? ["'self'", 'https://gestaodecontratosatendebotback-production.up.railway.app']
+        : ["'self'"],
       fontSrc: ["'self'", 'https://cdn.jsdelivr.net'],
       objectSrc: ["'none'"],
       upgradeInsecureRequests: []
@@ -44,9 +46,7 @@ app.use(helmet({
 }));
 
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production'
-    ? [process.env.FRONTEND_URL || 'http://localhost:5173']
-    : ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:5174'],
+  origin: true, // Aceita todas as origens por enquanto
   credentials: true
 }));
 
@@ -88,6 +88,10 @@ const swaggerOptions = {
       {
         url: `http://localhost:${PORT}`,
         description: 'Servidor de desenvolvimento'
+      },
+      {
+        url: 'https://gestaodecontratosatendebotback-production.up.railway.app',
+        description: 'Servidor de produção (Railway)'
       }
     ],
     components: {

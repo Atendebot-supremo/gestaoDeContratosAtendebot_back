@@ -96,6 +96,12 @@ router.patch(
   controller.update
 );
 
+router.put(
+  '/:id',
+  [...validateId, ...validateCreateCliente],
+  controller.replace
+);
+
 router.delete(
   '/:id',
   validateId,
